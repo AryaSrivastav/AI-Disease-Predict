@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.input {
+  @apply w-full p-3 mb-3 rounded-xl bg-black/40 text-white outline-none border border-gray-700 focus:border-yellow-400 transition;
+}
+body {
+  background: radial-gradient(circle at top, #0f172a, #000);
+}
+
+/* smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
