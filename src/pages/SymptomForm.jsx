@@ -9,16 +9,12 @@ export default function SymptomForm() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // 🔥 PROFILE STATE
-  const [profile, setProfile] = useState("Aaru");
-
   const [data, setData] = useState({
     age: "",
     bp: "",
     sugar: "",
     height: "",
     weight: "",
-    gender: "Female",
   });
 
   const navigate = useNavigate();
@@ -29,82 +25,43 @@ export default function SymptomForm() {
   };
 
   const submit = async () => {
-    try {
-      setLoading(true);
-
-      const bmi = calculateBMI();
-
-      const res = await predictDisease({
-        ...data,
-        bmi,
-        symptoms: selected,
-      });
-
-      // 🔥 SAVE PROFILE-WISE
-      const healthLog = {
-        weight: data.weight,
-        bp: data.bp,
-        sugar: data.sugar,
-        bmi,
-        gender: data.gender,
-        date: new Date().toLocaleString(),
-      };
-
-      const allProfiles =
-        JSON.parse(localStorage.getItem("profiles")) || {};
-
-      const userData = allProfiles[profile] || { logs: [] };
-
-      allProfiles[profile] = {
-        gender: data.gender,
-        logs: [healthLog, ...(userData.logs || [])],
-      };
-
-      localStorage.setItem("profiles", JSON.stringify(allProfiles));
-
-      const entry = {
-        ...res,
-        bmi,
-        symptoms: selected,
-        date: new Date().toLocaleString(),
-      };
-
-      navigate("/result", { state: entry });
-
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong");
-    } finally {
-      setLoading(false);
+    if (!data.height || !data.weight) {
+      alert("Enter height & weight");
+      return;
     }
+
+    setLoading(true);
+
+    const bmi = calculateBMI();
+
+    const res = await predictDisease({
+      ...data,
+      symptoms: selected,
+    });
+
+    const entry = {
+      ...res,
+      bmi,
+      symptoms: selected,
+      date: new Date().toLocaleString(),
+    };
+
+    const old = JSON.parse(localStorage.getItem("history")) || [];
+    localStorage.setItem("history", JSON.stringify([entry, ...old]));
+
+    setTimeout(() => {
+      setLoading(false);
+      navigate("/result", { state: entry });
+    }, 1000);
   };
 
-return (
-  <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white p-6">
-      <div className="bg-white/10 p-8 rounded-xl w-full max-w-xl">
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 bg-gradient-to-br from-[#0f172a] to-black text-white">
+      <div className="w-full max-w-xl bg-white/10 p-6 md:p-8 rounded-2xl">
 
-        <h2 className="text-xl text-yellow-400 mb-4">
+        <h2 className="text-xl md:text-2xl mb-4 text-yellow-400">
           Health Details
         </h2>
-
-        {/* 🔥 PROFILE */}
-        <input
-          placeholder="Profile Name (e.g. Aaru, Mom)"
-          value={profile}
-          onChange={(e) => setProfile(e.target.value)}
-          className="input"
-        />
-
-        {/* 🔥 GENDER */}
-        <select
-          className="input"
-          onChange={(e) =>
-            setData({ ...data, gender: e.target.value })
-          }
-        >
-          <option>Female</option>
-          <option>Male</option>
-        </select>
 
         <input placeholder="Age" className="input" onChange={(e)=>setData({...data, age:e.target.value})}/>
         <input placeholder="Blood Pressure" className="input" onChange={(e)=>setData({...data, bp:e.target.value})}/>
@@ -114,9 +71,11 @@ return (
 
         <SymptomSelector selected={selected} setSelected={setSelected} />
 
-        <Button onClick={submit}>
-          {loading ? <Loader /> : "Predict"}
-        </Button>
+        <div className="mt-4">
+          <Button onClick={submit}>
+            {loading ? <Loader /> : "Predict"}
+          </Button>
+        </div>
 
       </div>
     </div>
