@@ -77,7 +77,7 @@ export default function SymptomForm() {
           Health Details
         </h2>
 
-        {/* 👤 PROFILE SELECTOR */}
+        {/* PROFILE SELECTOR */}
         <ProfileSelector selected={profile} setSelected={setProfile} />
 
         {/* INPUTS */}

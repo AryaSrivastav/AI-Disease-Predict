@@ -54,8 +54,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white p-6">
-
+<div className="min-h-screen w-full max-w-6xl mx-auto px-4 py-6 bg-white dark:bg-black text-black dark:text-white">
       <h1 className="text-3xl text-yellow-400 mb-6">
         Dashboard
       </h1>
