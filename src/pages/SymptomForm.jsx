@@ -87,7 +87,7 @@ export default function SymptomForm() {
 
         {/* 👤 PROFILE NAME */}
         <input
-          placeholder="Profile (Aaru / Mom / Dad)"
+          placeholder="Name"
           className="input"
           value={profile}
           onChange={(e) => setProfile(e.target.value)}
