@@ -7,13 +7,13 @@ export default function Navbar() {
   const [dark, setDark] = useState(true);
   const [user, setUser] = useState(null);
 
-  // 🔥 Load theme
+  // Load theme
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") setDark(false);
   }, []);
 
-  // 🔥 Apply theme
+  // Apply theme
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark");
@@ -24,7 +24,7 @@ export default function Navbar() {
     }
   }, [dark]);
 
-  // 🔥 Load user
+  // Load user
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     setUser(storedUser);

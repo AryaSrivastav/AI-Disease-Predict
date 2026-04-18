@@ -27,16 +27,16 @@ export default function App() {
         {/*  MAIN CONTENT */}
         <main className="flex-1 w-full max-w-6xl mx-auto px-4 py-4">
           <Routes>
-            <Route path="/" element={<Landing />} />
-            <Route path="/predict" element={<SymptomForm />} />
-            <Route path="/result" element={<Result />} />
-            <Route path="/history" element={<History />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/tracker" element={<Tracker />} />
-          </Routes>
+  <Route path="/" element={<Landing />} />
+  <Route path="/predict" element={<SymptomForm />} />   
+  <Route path="/result" element={<Result />} />
+  <Route path="/history" element={<History />} />
+  <Route path="/tracker" element={<Tracker />} />
+  <Route path="/dashboard" element={<Dashboard />} />
+  <Route path="/about" element={<About />} />
+  <Route path="/contact" element={<Contact />} />
+  <Route path="/login" element={<Login />} />
+</Routes>
         </main>
 
         {/*  FOOTER */}

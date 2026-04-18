@@ -27,6 +27,10 @@ export default function Landing() {
 
       {/* Button */}
       <button
+      onClick={() => {
+  console.log("GOING TO PREDICT");
+  navigate("/predict");
+}}
         onClick={() => navigate("/predict")}
         className="bg-yellow-500 text-black px-4 py-2 md:px-8 md:py-3 rounded-xl font-semibold hover:scale-105 transition"
       >

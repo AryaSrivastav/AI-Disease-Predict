@@ -1,158 +1,97 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import SymptomSelector from "../components/SymptomSelector";
+import ProfileSelector from "../components/ProfileSelector";
+import Button from "../components/Button";
+import Loader from "../components/Loader";
+import { useNavigate } from "react-router-dom";
+import { predictDisease } from "../api/prediction";
 
-export default function History() {
-  const [history, setHistory] = useState([]);
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
+export default function SymptomForm() {
+  const [selectedSymptoms, setSelectedSymptoms] = useState([]);
+  const [profile, setProfile] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const profiles = JSON.parse(localStorage.getItem("profiles")) || {};
+  const [data, setData] = useState({
+    age: "",
+    bp: "",
+    sugar: "",
+    height: "",
+    weight: "",
+  });
 
-    // 🔥 Convert profiles → flat history list
-    const allLogs = Object.keys(profiles).flatMap((profile) =>
-      (profiles[profile].logs || []).map((log) => ({
-        ...log,
-        profile,
-      }))
-    );
+  const navigate = useNavigate();
 
-    setHistory(allLogs.reverse());
-  }, []);
-
-  const clearHistory = () => {
-    localStorage.removeItem("profiles");
-    setHistory([]);
+  const calculateBMI = () => {
+    const h = data.height / 100;
+    return (data.weight / (h * h)).toFixed(1);
   };
 
-  const deleteOne = (index) => {
-    const updated = [...history];
-    const removed = updated.splice(index, 1)[0];
+  const submit = async () => {
+    if (!profile) {
+      alert("Select profile first");
+      return;
+    }
 
-    // 🔥 remove from profiles also
-    const profiles = JSON.parse(localStorage.getItem("profiles")) || {};
-    profiles[removed.profile].logs = profiles[removed.profile].logs.filter(
-      (log) => log.date !== removed.date
-    );
+    if (!data.height || !data.weight) {
+      alert("Enter height & weight");
+      return;
+    }
 
-    localStorage.setItem("profiles", JSON.stringify(profiles));
-    setHistory(updated);
-  };
+    setLoading(true);
 
-  const getRiskColor = (confidence) => {
-    if (confidence > 0.8) return "bg-red-500";
-    if (confidence > 0.6) return "bg-yellow-500";
-    return "bg-green-500";
-  };
+    const bmi = calculateBMI();
 
-  const filteredHistory = history
-    .filter((item) =>
-      item.disease?.toLowerCase().includes(search.toLowerCase())
-    )
-    .filter((item) => {
-      if (filter === "high") return item.confidence > 0.8;
-      if (filter === "medium")
-        return item.confidence > 0.6 && item.confidence <= 0.8;
-      if (filter === "low") return item.confidence <= 0.6;
-      return true;
+    const res = await predictDisease({
+      ...data,
+      symptoms: selectedSymptoms,
     });
 
+    const profiles = JSON.parse(localStorage.getItem("profiles")) || {};
+
+    if (!profiles[profile]) {
+      profiles[profile] = { logs: [] };
+    }
+
+    const log = {
+      ...res,
+      ...data,
+      bmi,
+      symptoms: selectedSymptoms,
+      date: new Date().toISOString(),
+    };
+
+    profiles[profile].logs.unshift(log);
+
+    localStorage.setItem("profiles", JSON.stringify(profiles));
+
+    setLoading(false);
+
+    navigate("/result", { state: log });
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-white p-6">
+    <div className="min-h-screen flex justify-center items-center px-4 bg-black text-white">
+      <div className="w-full max-w-xl bg-white/10 p-6 rounded-2xl">
 
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
-        <h1 className="text-3xl text-yellow-400 font-bold">
-          Prediction History
-        </h1>
+        <h2 className="text-xl text-yellow-400 mb-4">
+          Health Details
+        </h2>
 
-        {history.length > 0 && (
-          <button
-            onClick={clearHistory}
-            className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600 transition"
-          >
-            Clear All
-          </button>
-        )}
-      </div>
+        {/* 👤 PROFILE SELECTOR */}
+        <ProfileSelector selected={profile} setSelected={setProfile} />
 
-      {/* SEARCH + FILTER */}
-      <div className="bg-white/10 p-4 rounded-xl mb-6 flex flex-col md:flex-row gap-4">
+        {/* INPUTS */}
+        <input placeholder="Age" className="input" onChange={(e)=>setData({...data, age:e.target.value})}/>
+        <input placeholder="Blood Pressure" className="input" onChange={(e)=>setData({...data, bp:e.target.value})}/>
+        <input placeholder="Blood Sugar" className="input" onChange={(e)=>setData({...data, sugar:e.target.value})}/>
+        <input placeholder="Height (cm)" className="input" onChange={(e)=>setData({...data, height:e.target.value})}/>
+        <input placeholder="Weight (kg)" className="input mb-4" onChange={(e)=>setData({...data, weight:e.target.value})}/>
 
-        <input
-          placeholder="Search disease..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="p-3 rounded-lg bg-gray-900 text-white outline-none w-full border border-gray-600"
-        />
+        <SymptomSelector selected={selectedSymptoms} setSelected={setSelectedSymptoms} />
 
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="p-3 rounded-lg bg-gray-900 text-white outline-none border border-gray-600"
-        >
-          <option value="all">All</option>
-          <option value="high">High Risk</option>
-          <option value="medium">Medium Risk</option>
-          <option value="low">Low Risk</option>
-        </select>
-
-      </div>
-
-      {/* EMPTY */}
-      {filteredHistory.length === 0 && (
-        <p className="text-gray-400">No matching records found</p>
-      )}
-
-      {/* CARDS */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-        {filteredHistory.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white/10 backdrop-blur-xl p-5 rounded-2xl border border-gray-700 shadow-lg hover:scale-105 transition duration-300"
-          >
-
-            {/* 👤 PROFILE NAME */}
-            <p className="text-yellow-400 text-sm font-semibold mb-1">
-              {item.profile}
-            </p>
-
-            {/* TOP */}
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl text-yellow-400 font-semibold">
-                {item.disease}
-              </h2>
-
-              <span
-                className={`text-xs px-3 py-1 rounded-full ${getRiskColor(
-                  item.confidence
-                )}`}
-              >
-                {(item.confidence * 100).toFixed(0)}%
-              </span>
-            </div>
-
-            {/* DATE */}
-            <p className="text-xs text-gray-400 mb-2">
-              {new Date(item.date).toLocaleString()}
-            </p>
-
-            {/* SYMPTOMS */}
-            <p className="text-sm text-gray-300 mb-4">
-              <span className="text-gray-400">Symptoms:</span>{" "}
-              {item.symptoms.join(", ")}
-            </p>
-
-            {/* ACTION */}
-            <button
-              onClick={() => deleteOne(index)}
-              className="text-red-400 text-sm hover:underline"
-            >
-              Delete
-            </button>
-
-          </div>
-        ))}
+        <Button onClick={submit}>
+          {loading ? <Loader /> : "Predict"}
+        </Button>
 
       </div>
     </div>
