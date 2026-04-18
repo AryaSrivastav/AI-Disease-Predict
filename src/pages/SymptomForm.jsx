@@ -8,6 +8,7 @@ import { predictDisease } from "../api/prediction";
 export default function SymptomForm() {
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [profile, setProfile] = useState("");
 
   const [data, setData] = useState({
     age: "",
@@ -25,6 +26,11 @@ export default function SymptomForm() {
   };
 
   const submit = async () => {
+    if (!profile) {
+      alert("Enter profile name (e.g. Aaru, Mom)");
+      return;
+    }
+
     if (!data.height || !data.weight) {
       alert("Enter height & weight");
       return;
@@ -39,20 +45,36 @@ export default function SymptomForm() {
       symptoms: selected,
     });
 
-    const entry = {
-      ...res,
+    const healthLog = {
+      name: profile,
+      age: data.age,
+      weight: data.weight,
+      bp: data.bp,
+      sugar: data.sugar,
       bmi,
       symptoms: selected,
       date: new Date().toLocaleString(),
     };
 
-    const old = JSON.parse(localStorage.getItem("history")) || [];
-    localStorage.setItem("history", JSON.stringify([entry, ...old]));
+    // 🔥 GET EXISTING PROFILES
+    const allProfiles =
+      JSON.parse(localStorage.getItem("profiles")) || {};
+
+    // 🔥 CREATE PROFILE IF NOT EXIST
+    if (!allProfiles[profile]) {
+      allProfiles[profile] = { logs: [] };
+    }
+
+    // 🔥 ADD NEW LOG
+    allProfiles[profile].logs.unshift(healthLog);
+
+    // 🔥 SAVE BACK
+    localStorage.setItem("profiles", JSON.stringify(allProfiles));
 
     setTimeout(() => {
       setLoading(false);
-      navigate("/result", { state: entry });
-    }, 1000);
+      navigate("/result", { state: { ...res, ...healthLog } });
+    }, 800);
   };
 
   return (
@@ -62,6 +84,14 @@ export default function SymptomForm() {
         <h2 className="text-xl md:text-2xl mb-4 text-yellow-400">
           Health Details
         </h2>
+
+        {/* 👤 PROFILE NAME */}
+        <input
+          placeholder="Profile (Aaru / Mom / Dad)"
+          className="input"
+          value={profile}
+          onChange={(e) => setProfile(e.target.value)}
+        />
 
         <input placeholder="Age" className="input" onChange={(e)=>setData({...data, age:e.target.value})}/>
         <input placeholder="Blood Pressure" className="input" onChange={(e)=>setData({...data, bp:e.target.value})}/>
